@@ -1,53 +1,72 @@
 import React, { useState } from "react";
+import { TextField, Button, Box } from "@mui/material";
+import { useFormik } from "formik";
+import APIService from '../services/APIService';
 
 function Login() {
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [message, setMessage] = useState<string>("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const response = await fetch("http://localhost:3002/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await response.json();
-    if (response.ok) {
-      // do something with access token
-
-      setMessage("Login successful");
-    } else {
-      setMessage(data.message);
-    }
-  };
+  const formik = useFormik({
+    initialValues: {
+      username: "",
+      password: "",
+    },
+    onSubmit: async (values) => {
+      try {
+        const apiService = APIService;
+        const response = await apiService.request("/login", "POST", values, true);
+        const data = response;
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+          setMessage("Login successful");
+        } else {
+          setMessage(data.message);
+        }
+      } catch (error) {
+        console.error(error);
+        setMessage("An error occurred during login.");
+      }
+    },
+  });
 
   return (
-    <div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 2 }}>
       <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>Username:</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div>
-          <label>Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <button type="submit">Login</button>
+      <form onSubmit={formik.handleSubmit}>
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Username"
+          name="username"
+          type="text"
+          value={formik.values.username}
+          onChange={formik.handleChange}
+          error={false}
+          helperText=""
+        />
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Password"
+          name="password"
+          type="password"
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          error={false}
+          helperText=""
+        />
+        <Button
+          fullWidth
+          variant="contained"
+          color="primary"
+          type="submit"
+          sx={{ marginTop: 2 }}
+        >
+          Login
+        </Button>
       </form>
       {message && <p>{message}</p>}
-    </div>
+    </Box>
   );
 }
 

@@ -8,7 +8,7 @@ class APIService {
     this.appVersion = "1.0.0";
   }
 
-  public static getInstance(): APIService {
+  public static   getInstance(): APIService {
     if (!APIService.instance) {
       APIService.instance = new APIService();
     }
@@ -19,7 +19,8 @@ class APIService {
     endpoint: string,
     method: string,
     body?: any,
-    auth: boolean = false
+    auth: boolean = false,
+    multipart: boolean = false
   ): Promise<any> {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -27,16 +28,28 @@ class APIService {
     };
 
     if (auth) {
-      // get access token somehow
+      let token = localStorage.getItem("token");
       if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+        if (multipart) {
+          headers['Content-Type']= 'multipart/form-data'
+        }
+        headers["Authorization"] = `Bearer ${token}`; 
       }
     }
 
+    let body_type = body;
+
+    if (multipart){
+      body_type = body;
+    }
+
+    else {
+      body_type = body ? JSON.stringify(body) : null;
+    }
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : null,
+      body: body_type
     });
 
     if (!response.ok) {
